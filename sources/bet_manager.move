@@ -14,9 +14,9 @@ module dice::bet_manager {
             abort EInvalidBetType
         };
 
-        // single number payout 4.9-1        
+        // single number payout 4.5-1        
         if (guess >= 1 && guess <= 6) {
-            return (((bet_size as u128) * 49u128 / 10u128) as u64)
+            return (((bet_size as u128) * 45u128 / 10u128) as u64)
         };
 
         // small/big/even/odd payout 1-1
