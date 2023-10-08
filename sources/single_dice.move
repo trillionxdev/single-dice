@@ -342,4 +342,65 @@ module dice::single_dice {
         };
         ((sum % 6) as u8)
     }
+
+    // --------------- Test only ---------------
+
+    #[test_only]
+    public fun init_for_testing(ctx: &mut TxContext) {
+        init(ctx)
+    }
+
+    #[test_only]
+    public fun settle_for_testing<T>(
+        house: &mut House<T>,
+        game_id: ID,
+        bls_sig: vector<u8>,
+    ): (u8, bool) {
+        assert!(game_exists(house, game_id), EGameNotExists);
+        let game = dof::remove<ID, Game<T>>(&mut house.id, game_id);
+        let Game {
+            id,
+            player,
+            start_epoch: _,
+            stake,
+            payout,
+            guess,
+            seed: _,
+        } = game;
+        // let msg_vec = object::uid_to_bytes(&id);
+        // vector::append(&mut msg_vec, seed);
+        // let public_key = house_pub_key(house);
+        // assert!(
+        //     bls12381_min_pk_verify(
+        //         &bls_sig, &public_key, &msg_vec,
+        //     ),
+        //     EInvalidBlsSig
+        // );
+        object::delete(id);
+
+        let hashed_beacon = blake2b256(&bls_sig);
+        let roll_result = roll(&hashed_beacon);
+        let player_won = bm::player_won(guess, roll_result);
+
+        let pnl = if (player_won) {
+            let payout_amount = coin::value(&payout);
+            coin::join(&mut payout, stake);
+            transfer::public_transfer(payout, player);
+            payout_amount
+        } else {
+            let stake_amount = coin::value(&stake);
+            coin::put(&mut house.pool, stake);
+            coin::put(&mut house.pool, payout);
+            stake_amount
+        };
+
+        event::emit(Outcome<T> {
+            game_id,
+            player,
+            player_won,
+            pnl,
+            challenged: false,
+        });
+        (roll_result, player_won)
+    }
 }
