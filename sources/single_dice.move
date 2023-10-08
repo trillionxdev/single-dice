@@ -24,6 +24,7 @@ module dice::single_dice {
     const EPoolNotEnough: u64 = 3;
     const EGameNotExists: u64 = 4;
     const EBatchSettleInvalidInputs: u64 = 5;
+    const ESeedLengthNotEnough: u64 = 6;
 
     // --------------- Events ---------------
 
@@ -155,6 +156,10 @@ module dice::single_dice {
             stake_amount >= house.min_stake_amount &&
             stake_amount <= house.max_stake_amount,
             EInvalidStakeAmount
+        );
+        assert!(
+            vector::length(&seed) >= 32,
+            ESeedLengthNotEnough,
         );
         // house place the stake
         assert!(house_pool_balance(house) >= stake_amount, EPoolNotEnough);
@@ -334,9 +339,10 @@ module dice::single_dice {
     // --------------- Helper Funtions ---------------
 
     fun roll(hashed_beacon: &vector<u8>): u8 {
+        let length = vector::length(hashed_beacon);
         let idx: u64 = 0;
         let sum: u64 = 0;
-        while (idx < 12) {
+        while (idx < length) {
             sum = sum + (*vector::borrow(hashed_beacon, idx) as u64);
             idx = idx + 1;
         };
