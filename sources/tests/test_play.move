@@ -15,12 +15,14 @@ module dice_test::test_play {
         let max_stake_amount: u64 = 50_000_000_000; // 50 SUI
         let init_pool_amount: u64 = 100 * max_stake_amount;
         let player_count: u64 = 8_000;
+        let payout_rate: u64 = 4_500;
         let roll_result_vec = vector<u64>[0, 0, 0, 0, 0, 0];
 
         let scenario_val = tu::setup_house<SUI>(
             init_pool_amount,
             min_stake_amount,
             max_stake_amount,
+            payout_rate,
         );
         let scenario = &mut scenario_val;
         let player_generator = tu::new_player_generator(
@@ -62,7 +64,7 @@ module dice_test::test_play {
                 assert!(single_dice::house_pool_balance(&house) == pool_balance - payout_amount, 0);
                 let bls_sig = address::to_bytes(address::from_u256(address::to_u256(player) - (idx as u256)));
                 let (roll_result, player_won) = single_dice::settle_for_testing(&mut house, game_id, bls_sig);
-                let roll_count = vector::borrow_mut(&mut roll_result_vec, (roll_result as u64));
+                let roll_count = vector::borrow_mut(&mut roll_result_vec, ((roll_result - 1) as u64));
                 *roll_count = *roll_count + 1;
                 ts::return_shared(house);
                 (player_won, payout_amount)

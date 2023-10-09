@@ -20,6 +20,7 @@ module dice_test::test_utils {
         init_pool_amount: u64,
         min_stake_amount: u64,
         max_stake_amount: u64,
+        payout_rate: u64,
     ): Scenario {
         let scenario_val = ts::begin(dev());
         let scenario = &mut scenario_val;
@@ -32,7 +33,15 @@ module dice_test::test_utils {
             let init_pool = balance::create_for_testing<T>(init_pool_amount);
             let init_pool = coin::from_balance(init_pool, ts::ctx(scenario));
             let admin_cap = ts::take_from_sender<AdminCap>(scenario);
-            single_dice::create_house(&admin_cap, b"", min_stake_amount, max_stake_amount, init_pool, ts::ctx(scenario));
+            single_dice::create_house(
+                &admin_cap,
+                b"",
+                min_stake_amount,
+                max_stake_amount,
+                payout_rate,
+                init_pool,
+                ts::ctx(scenario)
+            );
             ts::return_to_sender(scenario, admin_cap);
         };
 

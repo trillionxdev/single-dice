@@ -40,6 +40,7 @@ module dice::single_dice {
         player: address,
         player_won: bool,
         pnl: u64,
+        roll_result: u8,
         challenged: bool,
     }
 
@@ -58,6 +59,7 @@ module dice::single_dice {
         pub_key: vector<u8>,
         min_stake_amount: u64,
         max_stake_amount: u64,
+        payout_rate: u64,
         pool: Balance<T>,
     }
 
@@ -90,6 +92,7 @@ module dice::single_dice {
         pub_key: vector<u8>,
         min_stake_amount: u64,
         max_stake_amount: u64,
+        payout_rate: u64,
         init_fund: Coin<T>,
         ctx: &mut TxContext,
     ) {
@@ -98,6 +101,7 @@ module dice::single_dice {
             pub_key,
             min_stake_amount,
             max_stake_amount,
+            payout_rate,
             pool: coin::into_balance(init_fund),
         });
     }
@@ -141,6 +145,14 @@ module dice::single_dice {
         house.min_stake_amount = min_stake_amount;
     }
 
+    public entry fun update_payout_rate<T>(
+        _: &AdminCap,
+        house: &mut House<T>,
+        payout_rate: u64,
+    ) {
+        house.payout_rate = payout_rate;
+    }
+
     // --------------- Game Funtions ---------------
 
     public entry fun start_game<T>(
@@ -151,7 +163,8 @@ module dice::single_dice {
         ctx: &mut TxContext,
     ): ID {
         let stake_amount = coin::value(&stake);
-        let payout_amount = bm::payout_amount(stake_amount, guess);
+        let payout_rate = house_payout_rate(house);
+        let payout_amount = bm::payout_amount(stake_amount, guess, payout_rate);
         assert!(
             stake_amount >= house.min_stake_amount &&
             stake_amount <= house.max_stake_amount,
@@ -234,6 +247,7 @@ module dice::single_dice {
             player,
             player_won,
             pnl,
+            roll_result,
             challenged: false,
         });
         player_won
@@ -288,6 +302,7 @@ module dice::single_dice {
             player,
             player_won: true,
             pnl,
+            roll_result: 0,
             challenged: true,
         });
     }
@@ -304,6 +319,10 @@ module dice::single_dice {
 
     public fun house_stake_range<T>(house: &House<T>): (u64, u64) {
         (house.min_stake_amount, house.max_stake_amount)
+    }
+
+    public fun house_payout_rate<T>(house: &House<T>): u64 {
+        house.payout_rate
     }
 
     public fun game_exists<T>(house: &House<T>, game_id: ID): bool {
@@ -346,7 +365,7 @@ module dice::single_dice {
             sum = sum + (*vector::borrow(hashed_beacon, idx) as u64);
             idx = idx + 1;
         };
-        ((sum % 6) as u8)
+        ((sum % 6) as u8) + 1
     }
 
     // --------------- Test only ---------------
@@ -405,6 +424,7 @@ module dice::single_dice {
             player,
             player_won,
             pnl,
+            roll_result,
             challenged: false,
         });
         (roll_result, player_won)
