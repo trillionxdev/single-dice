@@ -3,7 +3,7 @@ module dice_test::test_play {
     
     use std::vector;
     use sui::coin::{Self, Coin};
-    use sui::address;
+    use sui::address as addr;
     use sui::sui::SUI;
     use sui::test_scenario as ts;
     use dice::single_dice::{Self, House};
@@ -39,7 +39,7 @@ module dice_test::test_play {
                 ts::ctx(scenario)
             );
             let stake_amount = coin::value(&stake);
-            let seed = address::to_bytes(player);
+            let seed = addr::to_bytes(player);
             // start a game
             ts::next_tx(scenario, player);
             let (game_id, pool_balance) = {
@@ -59,10 +59,10 @@ module dice_test::test_play {
                 let game = single_dice::borrow_game(&house, game_id);
                 let payout_amount = single_dice::game_payout_amount(game);
                 assert!(single_dice::game_guess(game) == ((idx % 10) as u8), 0);
-                assert!(single_dice::game_seed(game) == address::to_bytes(player), 0);
+                assert!(single_dice::game_seed(game) == addr::to_bytes(player), 0);
                 assert!(single_dice::game_stake_amount(game) == stake_amount, 0);
                 assert!(single_dice::house_pool_balance(&house) == pool_balance - payout_amount, 0);
-                let bls_sig = address::to_bytes(address::from_u256(address::to_u256(player) - (idx as u256)));
+                let bls_sig = addr::to_bytes(addr::from_u256(addr::to_u256(player) - (idx as u256)));
                 let (roll_result, player_won) = single_dice::settle_for_testing(&mut house, game_id, bls_sig);
                 let roll_count = vector::borrow_mut(&mut roll_result_vec, ((roll_result - 1) as u64));
                 *roll_count = *roll_count + 1;

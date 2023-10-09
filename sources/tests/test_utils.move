@@ -1,6 +1,6 @@
 #[test_only]
 module dice_test::test_utils {
-    use sui::address;
+    use sui::address as addr;
     use sui::balance;
     use sui::coin::{Self, Coin};
     use sui::tx_context::TxContext;
@@ -65,7 +65,7 @@ module dice_test::test_utils {
         ctx: &mut TxContext,
     ): (address, Coin<T>) {
         let random = &mut generator.random;
-        let player = address::from_u256(test_random::next_u256(random));
+        let player = addr::from_u256(test_random::next_u256(random));
         let stake_amount_diff = generator.max_stake_amount - generator.min_stake_amount;
         let stake = balance::create_for_testing<T>(
             generator.min_stake_amount +
